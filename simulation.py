@@ -33,8 +33,9 @@ class Simulation:
       self.cars = []
       self.lanes = [[] for _ in range(num_lanes)]
       cars_per_lane = num_cars // num_lanes
+      # cars that don't evenly fit in the lanes
       extra_cars = num_cars % num_lanes
-      
+
 
       car_tecniques = np.random.choice(["Reckless", "Cautious", "Normal"], num_cars, p=tecnhique_distrib)
       for lane in range(num_lanes):
