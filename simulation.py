@@ -48,8 +48,8 @@ class Simulation:
 
       car_index = 0
       for lane, cars_per_lane in enumerate(lane_capacity):
-         empty_space = lane_length - car_length * num_cars
-         space_between_car = empty_space / num_cars
+         empty_space = lane_length - car_length * cars_per_lane
+         space_between_car = empty_space / cars_per_lane
          speed = 0
          position = 0
          for car in range(cars_per_lane):
@@ -66,7 +66,7 @@ class Simulation:
       
       
       pprint(positions)
-      plt.figure(figsize=(10, 6))  # Adjust figure size if needed
+      plt.figure(figsize=(10, 3))  # Adjust figure size if needed
 
       # Plot road lines for each lane
       for lane in range(self.num_lanes):
@@ -78,7 +78,7 @@ class Simulation:
       # Customize plot
       plt.xlabel('Position')
       plt.ylabel('Lane')
-      plt.title('Car Positions Along Three Lanes')
+      plt.title(f'{self.num_lanes} Lane Highway with {self.num_cars} Cars')
       plt.yticks([lane * .05 for lane in range(self.num_lanes)], [f"Lane{lane}" for lane in range(self.num_lanes)])
       plt.legend()
 
@@ -94,5 +94,5 @@ class Simulation:
 
 
 if __name__ == "__main__":
-   highway_sim = Simulation(30, 1, [1, 0, 0], 3, 100)
+   highway_sim = Simulation(50, 1, [1, 0, 0], 3, 100)
    highway_sim.plot_starting_conditions()
