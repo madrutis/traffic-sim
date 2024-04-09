@@ -9,8 +9,8 @@ import time
 #%matplotlib
 
 class Car:
-   reckless = {"desired_speed": 1.5, "accel": .2, "decel": .5}
-   cautious = {"desired_speed": .9, "accel": .05, "decel": .3}
+   reckless = {"desired_speed": 1.5, "accel": .2, "decel": .7}
+   cautious = {"desired_speed": .9, "accel": .03, "decel": .3}
    normal = {"desired_speed": 1, "accel": .1, "decel": .4}
 
    def __init__(self, lane, position, speed, technique, length=1):
@@ -24,6 +24,7 @@ class Car:
       self.desired_decel = None
       self.accel = None
       self.decel = None
+      self.technique = technique
       self.assign_characteristics(technique)
       
    
@@ -46,14 +47,28 @@ class Car:
       if self.pos >= lane_length:
          self.pos = self.pos % lane_length
 
+   def distance_to_car(self, car, lane_length):
+      # make sure that this accounts for the looping nature of the road
+      if self.pos > car.pos:
+         return car.pos - self.pos - lane_length
+      return car.pos - self.pos
+
 
 
 class Simulation:
    def __init__(self, num_cars, car_length, tecnhique_distrib, num_lanes=3, lane_length=100):
+      self.threshold = 8
+      self.frames = None
       self.num_lanes = num_lanes
       self.num_cars = num_cars
       self.cars = {}
       self.lanes = [[] for _ in range(num_lanes)]
+      self.driving_type_colors = {
+         'Reckless': 'red',
+         'Normal': 'blue',
+         'Cautious': 'green'
+      }
+
       
       self.lane_length = lane_length
       cars_per_lane = num_cars // num_lanes
@@ -91,9 +106,19 @@ class Simulation:
       for lane in range(self.num_lanes):
          plt.plot([0, self.lane_length], [lane * .05, lane * .05], color='gray', linestyle='--', linewidth=1)
 
+      # Define a color map for each driving type
+      
       # Plot cars
       for lane in range(self.num_lanes):
-         plt.scatter(positions[lane], [lane * .05]*len(positions[lane]), label=f'Lane {lane}')
+         lane_positions = positions[lane]
+         driving_types = [self.cars[car_index].technique for car_index in self.lanes[lane]]
+         colors = [self.driving_type_colors[driving_type] for driving_type in driving_types]
+         plt.scatter(lane_positions, [lane * .05] * len(lane_positions), color=colors, label=f'Lane {lane}')
+      
+      # # Plot cars
+      # for lane in range(self.num_lanes):
+      #    plt.scatter(positions[lane], [lane * .05]*len(positions[lane]), label=f'Lane {lane}')
+         
       # Customize plot
       plt.xlabel('Position')
       plt.ylabel('Lane')
@@ -103,10 +128,11 @@ class Simulation:
 
       # Show plot
       plt.tight_layout()
-      print(plt.use('Agg'))
       ax = plt.gca()
-      plt.show()
-      display.clear_output(wait=True)
+      # plt.show()
+      plt.ion()
+      
+      # display.clear_output(wait=True)
       
 
    def update(self):
@@ -118,21 +144,45 @@ class Simulation:
          car.pos += car.speed
          if car.speed >= car.desired_speed:
             car.accel = 0
-         car.speed += car.accel
+         # car.speed += car.accel
+         
+
+         # get the index of the car in front of them.
+         car_index = self.lanes[car.lane].index(i)
+         next_car_index = self.lanes[car.lane][(car_index + 1) % len(self.lanes[car.lane])]
+         next_car = self.cars[next_car_index]
+
+         dist_to_next_car = car.distance_to_car(next_car, self.lane_length)
+         # if car's speed is slower than next car's speed, and they are within the threshold, then brake
+         # car_a_velocity = car _a_velocity - deceleration_param * (1 / |car_b_position - car_a_position| **2)
+         
+
+         if next_car.pos - car.pos < self.threshold and car.speed < next_car.speed:
+            # print(f"Car {i} is braking with a distance of {dist_to_next_car}")
+            if dist_to_next_car < car.length:
+               car.speed = next_car.speed
+            car.speed = car.speed - car.decel * (1 / dist_to_next_car ** 2)
+         else:
+            car.speed += car.accel
+
+         # make sure the car is still in bounds
          car.check_bounds(self.lane_length)
 
+
+
    def run(self, num_steps, plot=True):
-      for _ in range(num_steps):
+      for i in range(num_steps):
+         # print(f"Update #{i}")
          self.update()
          if plot:
             self.plot()
-         time.sleep(0.1)
+         # time.sleep(0.1)
       
 
 
 
 if __name__ == "__main__":
-   highway_sim = Simulation(30, 1, [1, 0, 0], 3, 100)
+   highway_sim = Simulation(40, 1, [.7, .3, 0], 3, 100)
    highway_sim.run(1000)
    
    
