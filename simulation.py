@@ -9,9 +9,9 @@ import time
 #%matplotlib
 
 class Car:
-   reckless = {"desired_speed": 1.5, "accel": .2, "decel": .7, "threshold": 10}
-   cautious = {"desired_speed": .9, "accel": .03, "decel": .3, "threshold": 30}
-   normal = {"desired_speed": 1, "accel": .1, "decel": .4, "threshold": 18}
+   reckless = {"desired_speed": 1.5, "accel": .2, "decel": .7, "threshold": 10, "patience": 5}
+   cautious = {"desired_speed": .9, "accel": .03, "decel": .3, "threshold": 30, "patience": 12}
+   normal = {"desired_speed": 1, "accel": .1, "decel": .4, "threshold": 18, "patience": 8}
 
    def __init__(self, lane, position, speed, technique, length=1):
       self.lane = lane
@@ -25,6 +25,8 @@ class Car:
       self.accel = None
       self.decel = None
       self.technique = technique
+      self.waiting_for = 0
+
       self.assign_characteristics(technique)
       
    
@@ -138,6 +140,8 @@ class Simulation:
       # randomly update the order of the cars
       # update_order = np.random.permutation(np.arange(self.num_cars))
 
+      
+
       update_order = []
       for lane in self.lanes:
          update_order += lane
@@ -159,14 +163,28 @@ class Simulation:
          if ((dist_to_next_car) < car.threshold) and (car.speed > next_car.speed):
             # print(f"Car {i} is braking with a distance of {dist_to_next_car}")
             car.speed = max(car.speed - 2 * car.decel * (1 / dist_to_next_car ** 2), 0)
+            if dist_to_next_car < car.length:
+               car.speed = 0
+            car.waiting_for += 1
          else:
             car.speed = min(car.desired_speed, car.speed + car.accel)
+            car.waiting_for = 0
 
          # make sure the car is still in bounds
          car.check_bounds(self.lane_length)
 
          # make sure that the lane is updated correctly with which car is in front
          self.update_lanes()
+
+   def get_waiting_cars(self):
+      """Get the cars that are currently waiting to change lanes."""
+      cars_waiting = []
+      for lane in self.lanes:
+         for car_index in lane:
+            car = self.cars[car_index]
+            if car.waiting_for >= car.patience:
+               cars_waiting.append(car)
+      return cars_waiting
    
    def update_lanes(self):
       for lane_num, lane in enumerate(self.lanes):
@@ -185,7 +203,7 @@ class Simulation:
 
 
 if __name__ == "__main__":
-   highway_sim = Simulation(80, 1, [.7, .3, 0], 3, 100)
+   highway_sim = Simulation(100, 1, [.9, .1, 0], 5, 125)
    highway_sim.run(1000)
    
    
