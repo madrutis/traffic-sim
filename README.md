@@ -12,7 +12,7 @@ There are 3 different agents that can spawn, each with their own individual driv
 ## To run the simulation yourself:
 ### Clone the repository:
 With SSH:
-`git clone git@github.com:madrutis/cmplxsys_finalproj.git`
+`git clone git@github.com:madrutis/cmplxsys_finalproj.git`<br>
 With HTTPS:
 `git clone https://github.com/madrutis/cmplxsys_finalproj.git`
 
@@ -22,6 +22,6 @@ Run the script `setup.sh` in your preferred unix/linux terminal which will:
 - download the requirements
 
 ### Running the simulation:
-Take a look around simulation.py, and adjust the initial parameters to the `Simulation` class.
-In VS Code or your preferred IDE, right click on the code in simulation.py, and click "Run in Interactive Terminal"
-Voila :magic_wand
+Take a look around simulation.py, and adjust the initial parameters to the `Simulation` class.<br>
+In VS Code or your preferred IDE, right click on the code in simulation.py, and click "Run in Interactive Terminal"<br>
+And Voila 🪄
