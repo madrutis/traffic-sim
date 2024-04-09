@@ -9,9 +9,9 @@ import time
 #%matplotlib
 
 class Car:
-   reckless = {"desired_speed": 1.5, "accel": .2, "decel": .7}
-   cautious = {"desired_speed": .9, "accel": .03, "decel": .3}
-   normal = {"desired_speed": 1, "accel": .1, "decel": .4}
+   reckless = {"desired_speed": 1.5, "accel": .2, "decel": .7, "threshold": 10}
+   cautious = {"desired_speed": .9, "accel": .03, "decel": .3, "threshold": 30}
+   normal = {"desired_speed": 1, "accel": .1, "decel": .4, "threshold": 18}
 
    def __init__(self, lane, position, speed, technique, length=1):
       self.lane = lane
@@ -42,6 +42,7 @@ class Car:
       self.desired_decel = np.random.normal(technique["decel"], .01)
       self.accel = self.desired_accel
       self.decel = self.desired_decel
+      self.threshold = technique["threshold"]
    
    def check_bounds(self, lane_length):
       if self.pos >= lane_length:
@@ -55,7 +56,6 @@ class Car:
 
 class Simulation:
    def __init__(self, num_cars, car_length, tecnhique_distrib, num_lanes=3, lane_length=100):
-      self.threshold = 20
       self.frames = None
       self.num_lanes = num_lanes
       self.num_cars = num_cars
@@ -156,7 +156,7 @@ class Simulation:
          # car_a_velocity = car _a_velocity - deceleration_param * (1 / |car_b_position - car_a_position| **2)
          
 
-         if ((dist_to_next_car) < self.threshold) and (car.speed > next_car.speed):
+         if ((dist_to_next_car) < car.threshold) and (car.speed > next_car.speed):
             # print(f"Car {i} is braking with a distance of {dist_to_next_car}")
             car.speed = max(car.speed - 2 * car.decel * (1 / dist_to_next_car ** 2), 0)
          else:
