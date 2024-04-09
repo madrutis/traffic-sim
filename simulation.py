@@ -38,8 +38,8 @@ class Car:
    
    def assign_metrics(self, technique):
       self.desired_speed = np.random.normal(technique["desired_speed"], 0.1)
-      self.desired_accel = np.random.normal(technique["accel"], .02)
-      self.desired_decel = np.random.normal(technique["decel"], .02)
+      self.desired_accel = np.random.normal(technique["accel"], .01)
+      self.desired_decel = np.random.normal(technique["decel"], .01)
       self.accel = self.desired_accel
       self.decel = self.desired_decel
    
@@ -49,15 +49,13 @@ class Car:
 
    def distance_to_car(self, car, lane_length):
       # make sure that this accounts for the looping nature of the road
-      if self.pos > car.pos:
-         return car.pos - self.pos - lane_length
-      return car.pos - self.pos
+      return min(car.pos - self.pos, lane_length + car.pos - self.pos)
 
 
 
 class Simulation:
    def __init__(self, num_cars, car_length, tecnhique_distrib, num_lanes=3, lane_length=100):
-      self.threshold = 8
+      self.threshold = 20
       self.frames = None
       self.num_lanes = num_lanes
       self.num_cars = num_cars
@@ -129,23 +127,24 @@ class Simulation:
       # Show plot
       plt.tight_layout()
       ax = plt.gca()
-      # plt.show()
-      plt.ion()
+      plt.show()
+      # plt.ion()
       
-      # display.clear_output(wait=True)
+      display.clear_output(wait=True)
       
 
    def update(self):
       """"Update the simulation by one time step"""
-      update_order = np.random.permutation(np.arange(self.num_cars))
+      # randomly update the order of the cars
+      # update_order = np.random.permutation(np.arange(self.num_cars))
+
+      update_order = []
+      for lane in self.lanes:
+         update_order += lane
 
       for i in update_order:
          car = self.cars[i]
          car.pos += car.speed
-         if car.speed >= car.desired_speed:
-            car.accel = 0
-         # car.speed += car.accel
-         
 
          # get the index of the car in front of them.
          car_index = self.lanes[car.lane].index(i)
@@ -157,17 +156,21 @@ class Simulation:
          # car_a_velocity = car _a_velocity - deceleration_param * (1 / |car_b_position - car_a_position| **2)
          
 
-         if next_car.pos - car.pos < self.threshold and car.speed < next_car.speed:
+         if ((dist_to_next_car) < self.threshold) and (car.speed > next_car.speed):
             # print(f"Car {i} is braking with a distance of {dist_to_next_car}")
-            if dist_to_next_car < car.length:
-               car.speed = next_car.speed
-            car.speed = car.speed - car.decel * (1 / dist_to_next_car ** 2)
+            car.speed = max(car.speed - 2 * car.decel * (1 / dist_to_next_car ** 2), 0)
          else:
-            car.speed += car.accel
+            car.speed = min(car.desired_speed, car.speed + car.accel)
 
          # make sure the car is still in bounds
          car.check_bounds(self.lane_length)
 
+         # make sure that the lane is updated correctly with which car is in front
+         self.update_lanes()
+   
+   def update_lanes(self):
+      for lane_num, lane in enumerate(self.lanes):
+         self.lanes[lane_num].sort(key=lambda x: self.cars[x].pos)
 
 
    def run(self, num_steps, plot=True):
@@ -182,7 +185,7 @@ class Simulation:
 
 
 if __name__ == "__main__":
-   highway_sim = Simulation(40, 1, [.7, .3, 0], 3, 100)
+   highway_sim = Simulation(80, 1, [.7, .3, 0], 3, 100)
    highway_sim.run(1000)
    
    
