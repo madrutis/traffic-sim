@@ -23,5 +23,5 @@ Run the script `setup.sh` in your preferred unix/linux terminal which will:
 
 ### Running the simulation:
 Take a look around simulation.py, and adjust the initial parameters to the `Simulation` class.<br>
-In VS Code or your preferred IDE, right click on the code in simulation.py, and click "Run in Interactive Terminal"<br>
+In VS Code or your preferred IDE, right click on the code in simulation.py, and click `Run in Interactive Window` ➡️ `Run Current File in Interactive Window`<br>
 And Voila 🪄
