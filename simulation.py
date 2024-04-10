@@ -118,13 +118,20 @@ class Simulation:
 
       # Define a color map for each driving type
       
-      # Plot cars
+      # Plot cars based on technique
       for lane in range(self.num_lanes):
          lane_positions = positions[lane]
          driving_types = [self.cars[car_index].technique for car_index in self.lanes[lane]]
          colors = [self.driving_type_colors[driving_type] for driving_type in driving_types]
          plt.scatter(lane_positions, [lane * .05] * len(lane_positions), color=colors, label=f'Lane {lane}')
-         
+
+      # # Plot cars based on whether they are waiting
+      # for lane in range(self.num_lanes):
+      #    lane_positions = positions[lane]
+      #    are_waiting = [self.cars[car_index].waiting_for >= self.cars[car_index].patience for car_index in self.lanes[lane]]
+      #    colors = ['red' if waiting else 'yellow' for waiting in are_waiting]
+      #    plt.scatter(lane_positions, [lane * .05] * len(lane_positions), color=colors, label=f'Lane {lane}')
+
       # Add labels to plot
       plt.xlabel('Position')
       plt.ylabel('Lane')
@@ -178,7 +185,7 @@ class Simulation:
             car.waiting_for += 1
          else:
             car.speed = min(car.desired_speed, car.speed + car.accel)
-            car.waiting_for = 0
+            # car.waiting_for = 0
 
          # make sure the car is still in bounds
          car.check_bounds(self.lane_length)
@@ -199,10 +206,17 @@ class Simulation:
          elif current_lane == self.num_lanes - 1:
             target_lanes = [self.num_lanes - 2]
          else:
+            target_lanes = [current_lane + 1, current_lane - 1]
             # randomize the order of the target lanes
-            target_lane = [current_lane + 1, current_lane - 1]
-            if np.random.random() < 0.5:
-               target_lanes = target_lane[::-1]
+            # if np.random.random() < 0.5:
+            #    target_lanes = target_lane[::-1]
+
+            #
+            if len(self.lanes[target_lanes[1]]) < len(self.lanes[target_lanes[0]]):
+               target_lanes = target_lanes[::-1]
+            
+            # pick the lane with less people in it!
+
          
          # check to see if the target lane is available
          for target_lane in target_lanes:
@@ -306,7 +320,7 @@ class Simulation:
 
 
 if __name__ == "__main__":
-   highway_sim = Simulation(100, 1, [1, 0, 0], 3, 150)
+   highway_sim = Simulation(100, 1, [.1, .4, .5], 5, 150)
    highway_sim.run(1000, True)
    
    
