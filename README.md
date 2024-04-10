@@ -1,5 +1,5 @@
 # Complex Systems 270 Final Project
-By: Matthew Drutis, Logan Hayner, Stevie Port
+By: Matthew Drutis (did the coding portion), Logan Hayner, Stevie Port
 
 ## Multi-lane Highway Simulation 🛣️:
 
