@@ -13,7 +13,8 @@ class Car:
    cautious = {"desired_speed": .9, "accel": .03, "decel": .3, "threshold": 30, "patience": 12}
    normal = {"desired_speed": 1, "accel": .1, "decel": .4, "threshold": 18, "patience": 8}
 
-   def __init__(self, lane, position, speed, technique, length=1):
+   def __init__(self, lane, position, speed, technique, index, length=1):
+      self.index = index
       self.lane = lane
       self.speed = speed
       self.length = length
@@ -97,7 +98,7 @@ class Simulation:
          speed = 0
          position = 0
          for car in range(cars_per_lane):
-            new_car = Car(lane, position, speed, car_techniques[car_index], car_length)
+            new_car = Car(lane, position, speed, car_techniques[car_index], car_index, car_length)
             self.cars[car_index] = new_car
             self.lanes[lane].append(car_index)
             car_index += 1
@@ -146,8 +147,9 @@ class Simulation:
       # update_order = np.random.permutation(np.arange(self.num_cars))
       waiting_cars = self.get_waiting_cars()
       self.num_waiting_per_timestep.append(len(waiting_cars))
-
       self.track_waiting_technique()
+
+      self.switch_lanes(waiting_cars)
 
 
       update_order = []
@@ -183,6 +185,47 @@ class Simulation:
 
          # make sure that the lane is updated correctly with which car is in front
          self.update_lanes()
+
+   def switch_lanes(self, waiting_cars):
+      """Try and switch the lane for all of the waiting cars."""
+      for car in waiting_cars:
+         # current lane
+         current_lane = car.lane
+         
+         # get the target lane(s)
+         target_lanes = []
+         if current_lane == 0:
+            target_lanes = [1]
+         elif current_lane == self.num_lanes - 1:
+            target_lanes = [self.num_lanes - 2]
+         else:
+            # randomize the order of the target lanes
+            target_lane = [current_lane + 1, current_lane - 1]
+            if np.random.random() < 0.5:
+               target_lanes = target_lane[::-1]
+         
+         # check to see if the target lane is available
+         for target_lane in target_lanes:
+            lane_availabe = True
+            for neighbor_index in self.lanes[target_lane]:
+               neighbor = self.cars[neighbor_index]
+               # check to see if the adjacent spot is open
+               if neighbor.pos > car.pos and neighbor.pos < (car.pos + (car.length / 2)):
+                  lane_availabe = False
+                  break
+            if lane_availabe:
+               self.swap_individual_car(car, target_lane)
+               break
+
+   def swap_individual_car(self, car, target_lane):
+      """Swap the car from the current lane to the target lane."""
+      car_index = car.index
+      current_lane = car.lane
+      self.lanes[current_lane].remove(car_index)
+      self.lanes[target_lane].append(car_index)
+      car.lane = target_lane
+      car.waiting_for = 0
+      self.update_lanes()
 
 
    def get_waiting_cars(self):
@@ -263,8 +306,8 @@ class Simulation:
 
 
 if __name__ == "__main__":
-   highway_sim = Simulation(100, 1, [.3, .3, .4], 5, 125)
-   highway_sim.run(1000, False)
+   highway_sim = Simulation(100, 1, [1, 0, 0], 3, 150)
+   highway_sim.run(1000, True)
    
    
 
