@@ -45,6 +45,7 @@ class Car:
       self.accel = self.desired_accel
       self.decel = self.desired_decel
       self.threshold = technique["threshold"]
+      self.patience = technique["patience"]
    
    def check_bounds(self, lane_length):
       if self.pos >= lane_length:
@@ -69,7 +70,11 @@ class Simulation:
          'Cautious': 'green'
       }
 
-      
+      self.num_cars_by_technique = {"Reckless": 0, "Cautious": 0, "Normal": 0}
+
+      self.num_waiting_per_timestep = []
+      self.num_waiting_by_tecnique = {"Reckless": [], "Cautious": [], "Normal": []}
+
       self.lane_length = lane_length
       cars_per_lane = num_cars // num_lanes
       # cars that don't evenly fit in the lanes
@@ -80,6 +85,10 @@ class Simulation:
       lane_capacity[-1] += extra_cars
 
       car_techniques = np.random.choice(["Reckless", "Cautious", "Normal"], num_cars, p=tecnhique_distrib)
+      # get the number of cars of each category
+      self.num_cars_by_technique["Reckless"] = np.sum(car_techniques == "Reckless")
+      self.num_cars_by_technique["Cautious"] = np.sum(car_techniques == "Cautious")
+      self.num_cars_by_technique["Normal"] = num_cars - self.num_cars_by_technique["Reckless"] - self.num_cars_by_technique["Cautious"]
 
       car_index = 0
       for lane, cars_per_lane in enumerate(lane_capacity):
@@ -114,12 +123,8 @@ class Simulation:
          driving_types = [self.cars[car_index].technique for car_index in self.lanes[lane]]
          colors = [self.driving_type_colors[driving_type] for driving_type in driving_types]
          plt.scatter(lane_positions, [lane * .05] * len(lane_positions), color=colors, label=f'Lane {lane}')
-      
-      # # Plot cars
-      # for lane in range(self.num_lanes):
-      #    plt.scatter(positions[lane], [lane * .05]*len(positions[lane]), label=f'Lane {lane}')
          
-      # Customize plot
+      # Add labels to plot
       plt.xlabel('Position')
       plt.ylabel('Lane')
       plt.title(f'{self.num_lanes} Lane Highway with {self.num_cars} Cars')
@@ -139,8 +144,11 @@ class Simulation:
       """"Update the simulation by one time step"""
       # randomly update the order of the cars
       # update_order = np.random.permutation(np.arange(self.num_cars))
+      waiting_cars = self.get_waiting_cars()
+      self.num_waiting_per_timestep.append(len(waiting_cars))
 
-      
+      self.track_waiting_technique()
+
 
       update_order = []
       for lane in self.lanes:
@@ -176,6 +184,7 @@ class Simulation:
          # make sure that the lane is updated correctly with which car is in front
          self.update_lanes()
 
+
    def get_waiting_cars(self):
       """Get the cars that are currently waiting to change lanes."""
       cars_waiting = []
@@ -186,6 +195,30 @@ class Simulation:
                cars_waiting.append(car)
       return cars_waiting
    
+   def get_waiting_technique(self):
+      """Get the number of cars that are currently waiting to change lanes by technique."""
+      reckless_waiting = 0
+      cautious_waiting = 0
+      normal_waiting = 0
+      for lane in self.lanes:
+         for car_index in lane:
+            car = self.cars[car_index]
+            if car.waiting_for >= car.patience:
+               if car.technique == "Reckless":
+                  reckless_waiting += 1
+               elif car.technique == "Cautious":
+                  cautious_waiting += 1
+               else:
+                  normal_waiting += 1
+      return reckless_waiting, cautious_waiting, normal_waiting
+   
+   def track_waiting_technique(self):
+      """Track the number of cars that are currently waiting to change lanes by technique."""
+      reckless_waiting, cautious_waiting, normal_waiting = self.get_waiting_technique()
+      self.num_waiting_by_tecnique["Reckless"].append(reckless_waiting)
+      self.num_waiting_by_tecnique["Cautious"].append(cautious_waiting)
+      self.num_waiting_by_tecnique["Normal"].append(normal_waiting)
+
    def update_lanes(self):
       for lane_num, lane in enumerate(self.lanes):
          self.lanes[lane_num].sort(key=lambda x: self.cars[x].pos)
@@ -198,13 +231,40 @@ class Simulation:
          if plot:
             self.plot()
          # time.sleep(0.1)
+      self.plot_all_waiting()
+      self.plot_waiting_by_technique()
+   
+   def plot_all_waiting(self):
+      plt.close()
+      plt.figure()
+      plt.plot([val / self.num_cars for val in self.num_waiting_per_timestep])
+      plt.xlabel('Time Step')
+      plt.ylabel('Percent of Waiting Cars')
+      plt.title('Percentage of Waiting Cars Over Time')
+      plt.savefig('waiting_cars.png')
+
+   def plot_waiting_by_technique(self):
+      plt.close()
+      plt.figure(figsize=(100, 5))
+      reckless = [x / self.num_cars_by_technique["Reckless"] for x in self.num_waiting_by_tecnique["Reckless"]]
+      cautious = [x / self.num_cars_by_technique["Cautious"] for x in self.num_waiting_by_tecnique["Cautious"]]
+      normal = [x / self.num_cars_by_technique["Normal"] for x in self.num_waiting_by_tecnique["Normal"]]
+
+      plt.plot(reckless, color='red', label='Reckless')
+      plt.plot(cautious, color='green', label='Cautious')
+      plt.plot(normal, color='blue', label='Normal')
+      plt.xlabel('Time Step')
+      plt.ylabel('Percent of Waiting Cars by Technique')
+      plt.title('Percent of Waiting Cars Over Time by Technique')
+      plt.savefig('waiting_cars_by_technique.png')
       
 
 
 
+
 if __name__ == "__main__":
-   highway_sim = Simulation(100, 1, [.9, .1, 0], 5, 125)
-   highway_sim.run(1000)
+   highway_sim = Simulation(100, 1, [.3, .3, .4], 5, 125)
+   highway_sim.run(1000, False)
    
    
 
