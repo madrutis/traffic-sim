@@ -1,0 +1,6 @@
+Questions for the professor:
+
+1. I modified a couple of things within the code in the dynamics to make things run a 
+bit smoother is this okay? (in terms of lane changing)
+2. The simulation often depends on the distribution of driving techniques... not sure how to fix this.
+3. Any suggestions to make this more realistic?

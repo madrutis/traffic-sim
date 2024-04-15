@@ -5,6 +5,7 @@ import IPython.display as display
 import random as rand
 from pprint import pprint
 import time
+import pandas as pd
 
 #%matplotlib
 
@@ -60,6 +61,9 @@ class Car:
 
 class Simulation:
    def __init__(self, num_cars, car_length, tecnhique_distrib, num_lanes=3, lane_length=100):
+      # get dataframe
+      self.data = self.load_csv()
+      
       self.frames = None
       self.num_lanes = num_lanes
       self.num_cars = num_cars
@@ -71,10 +75,12 @@ class Simulation:
          'Cautious': 'green'
       }
 
+      
       self.num_cars_by_technique = {"Reckless": 0, "Cautious": 0, "Normal": 0}
 
       self.num_waiting_per_timestep = []
       self.num_waiting_by_tecnique = {"Reckless": [], "Cautious": [], "Normal": []}
+      self.avg_diff_in_speed_per_timestep = {"Reckless": [], "Cautious": [], "Normal": []}
 
       self.lane_length = lane_length
       cars_per_lane = num_cars // num_lanes
@@ -85,6 +91,7 @@ class Simulation:
       lane_capacity = [cars_per_lane for _ in range(num_lanes)]
       lane_capacity[-1] += extra_cars
 
+      self.technique_distrib = tecnhique_distrib
       car_techniques = np.random.choice(["Reckless", "Cautious", "Normal"], num_cars, p=tecnhique_distrib)
       # get the number of cars of each category
       self.num_cars_by_technique["Reckless"] = np.sum(car_techniques == "Reckless")
@@ -104,7 +111,7 @@ class Simulation:
             car_index += 1
             position += car_length + space_between_car
       
-   def plot(self):
+   def plot(self, timestep):
       positions = [[] for _ in range(self.num_lanes)]
       for lane_num, lane in enumerate(self.lanes):
          for car_index in lane:
@@ -135,7 +142,7 @@ class Simulation:
       # Add labels to plot
       plt.xlabel('Position')
       plt.ylabel('Lane')
-      plt.title(f'{self.num_lanes} Lane Highway with {self.num_cars} Cars')
+      plt.title(f'{self.num_lanes} Lane Highway with {self.num_cars} Cars at timestep {timestep}')
       plt.yticks([lane * .05 for lane in range(self.num_lanes)], [f"Lane{lane}" for lane in range(self.num_lanes)])
 
 
@@ -154,8 +161,17 @@ class Simulation:
       # update_order = np.random.permutation(np.arange(self.num_cars))
       waiting_cars = self.get_waiting_cars()
       self.num_waiting_per_timestep.append(len(waiting_cars))
+      
+      # track waiting technique
       self.track_waiting_technique()
-
+      
+      # track difference in average speed
+      reck_diff, caut_diff, norm_diff = self.get_difference_in_desired_speed()
+      self.avg_diff_in_speed_per_timestep["Reckless"].append(reck_diff)
+      self.avg_diff_in_speed_per_timestep["Cautious"].append(caut_diff)
+      self.avg_diff_in_speed_per_timestep["Normal"].append(norm_diff)
+      
+      # have cars switch lanes if possible
       self.switch_lanes(waiting_cars)
 
 
@@ -252,6 +268,29 @@ class Simulation:
                cars_waiting.append(car)
       return cars_waiting
    
+   def get_difference_in_desired_speed(self):
+      """Get the avg(sum|speed - desired_speed|) of each type of driver."""
+      reckless_speed_diff = 0
+      cautious_speed_diff = 0
+      normal_speed_diff = 0
+      num_reck, num_cautious, num_normal = 0, 0, 0
+      for lane in self.lanes:
+         for car_index in lane:
+            car = self.cars[car_index]
+            if car.technique == "Reckless":
+               reckless_speed_diff += abs(car.speed - car.desired_speed)
+               num_reck += 1
+            elif car.technique == "Cautious":
+               cautious_speed_diff += abs(car.speed - car.desired_speed)
+               num_cautious += 1
+            else:
+               normal_speed_diff += abs(car.speed - car.desired_speed)
+               num_normal += 1
+      reckless_avg = reckless_speed_diff / num_reck if num_reck > 0 else 0
+      cautious_avg = cautious_speed_diff / num_cautious if num_cautious > 0 else 0
+      normal_avg = normal_speed_diff / num_normal if num_normal > 0 else 0
+      return reckless_avg, cautious_avg, normal_avg
+   
    def get_waiting_technique(self):
       """Get the number of cars that are currently waiting to change lanes by technique."""
       reckless_waiting = 0
@@ -286,10 +325,17 @@ class Simulation:
          # print(f"Update #{i}")
          self.update()
          if plot:
-            self.plot()
+            self.plot(i)
          # time.sleep(0.1)
       self.plot_all_waiting()
       self.plot_waiting_by_technique()
+      self.plot_avg_diff_in_speed()
+   
+   def load_csv(self):
+      return pd.read_csv('data.csv')
+
+   def save_csv(self):
+      pd.DataFrame(self.data).to_csv('data.csv', index=False)
    
    def plot_all_waiting(self):
       plt.close()
@@ -315,13 +361,39 @@ class Simulation:
       plt.title('Percent of Waiting Cars Over Time by Technique')
       plt.savefig('waiting_cars_by_technique.png')
       
+   def plot_avg_diff_in_speed(self):
+      """Plot the average difference in desired speed and actual speed and add to the dataframe."""
+      plt.close()
+      plt.figure(figsize=(100, 5))
+      reckless = self.avg_diff_in_speed_per_timestep["Reckless"]
+      cautious = self.avg_diff_in_speed_per_timestep["Cautious"]
+      normal = self.avg_diff_in_speed_per_timestep["Normal"]
 
+      plt.plot(reckless, color='red', label='Reckless')
+      plt.plot(cautious, color='green', label='Cautious')
+      plt.plot(normal, color='blue', label='Normal')
+      plt.xlabel('Time Step')
+      plt.ylabel('Average Difference in Desired Speed and Actual Speed')
+      plt.title('Average Difference in Desired Speed and Actual Speed of All Cars By Tecnique')
+      plt.savefig('avg_diff_desired_actual.png')
+      print("Sum of average Difference in Speed:")
+      sum_reckless = np.sum(reckless)
+      sum_cautious = np.sum(cautious)
+      sum_normal = np.sum(normal)
+      print(f"Reckless: {sum_reckless}\tCautious: {sum_cautious}\tNormal: {np.sum(sum_normal)}")
+      new_data = {}
+      new_data['num_cars'] = self.num_cars
+      reck_d, caut_d, norm_d = self.technique_distrib
+      new_data['reckless'] = reck_d
+      new_data['cautious'] = caut_d
+      new_data['']
+      self.data = self.data.append({'num_cars': self.num_cars, 'reckless': sum_reckless, 'cautious': sum_cautious, 'normal': sum_normal}, ignore_index=True)
 
 
 
 if __name__ == "__main__":
-   highway_sim = Simulation(150, 1, [.3, .4, .3], 17, 125)
-   highway_sim.run(1000, True)
+   highway_sim = Simulation(30, 1, [1, 0, 0], 3, 125)
+   highway_sim.run(500, True)
    
    
 
