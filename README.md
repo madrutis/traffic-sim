@@ -20,6 +20,8 @@ With HTTPS:
 Run the script `setup.sh` in your preferred unix/linux terminal which will:
 - make a new virtual environment
 - download the requirements
+<br>
+* If the requirements download doesn't work, you can just pip install <package> for the package imported at the top of simulation.py
 
 ### Running the simulation:
 Take a look around simulation.py, and adjust the initial parameters to the `Simulation` class.<br>
