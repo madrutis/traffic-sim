@@ -9,8 +9,8 @@ import time
 #%matplotlib
 
 class Car:
-   reckless = {"desired_speed": 1.5, "accel": .2, "decel": .7, "threshold": 10, "patience": 5}
-   cautious = {"desired_speed": .9, "accel": .03, "decel": .3, "threshold": 30, "patience": 12}
+   reckless = {"desired_speed": 1, "accel": .2, "decel": .7, "threshold": 10, "patience": 5}
+   cautious = {"desired_speed": 1, "accel": .03, "decel": .3, "threshold": 30, "patience": 12}
    normal = {"desired_speed": 1, "accel": .1, "decel": .4, "threshold": 18, "patience": 8}
 
    def __init__(self, lane, position, speed, technique, index, length=1):
@@ -320,7 +320,7 @@ class Simulation:
 
 
 if __name__ == "__main__":
-   highway_sim = Simulation(100, 1, [.1, .4, .5], 5, 150)
+   highway_sim = Simulation(150, 1, [.3, .4, .3], 17, 125)
    highway_sim.run(1000, True)
    
    
