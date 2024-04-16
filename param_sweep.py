@@ -22,7 +22,7 @@ def parameter_sweep(path):
             
             # run the sim 3 times for each distribution of drivers
             for i in range(3):
-                highway_sim = Simulation(75, 1, [reckless, cautious, normal], path, 10, 125)
+                highway_sim = Simulation(30, 1, [reckless, cautious, normal], path, 6, 125)
                 highway_sim.run(500, False, True)
                 runs += 1
 
