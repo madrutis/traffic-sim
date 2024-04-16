@@ -10,8 +10,8 @@ import pandas as pd
 #%matplotlib
 
 class Car:
-   reckless = {"desired_speed": 1, "accel": .2, "decel": .7, "threshold": 10, "patience": 5}
-   cautious = {"desired_speed": 1, "accel": .03, "decel": .3, "threshold": 30, "patience": 12}
+   reckless = {"desired_speed": 1.1, "accel": .2, "decel": .7, "threshold": 10, "patience": 5}
+   cautious = {"desired_speed": .95, "accel": .03, "decel": .3, "threshold": 30, "patience": 12}
    normal = {"desired_speed": 1, "accel": .1, "decel": .4, "threshold": 18, "patience": 8}
 
    def __init__(self, lane, position, speed, technique, index, length=1):
@@ -60,8 +60,9 @@ class Car:
 
 
 class Simulation:
-   def __init__(self, num_cars, car_length, tecnhique_distrib, num_lanes=3, lane_length=100):
+   def __init__(self, num_cars, car_length, tecnhique_distrib, path_to_csv, num_lanes=3, lane_length=100):
       # get dataframe
+      self.path_to_csv = path_to_csv
       self.data = self.load_csv()
       
       self.frames = None
@@ -320,22 +321,27 @@ class Simulation:
          self.lanes[lane_num].sort(key=lambda x: self.cars[x].pos)
 
 
-   def run(self, num_steps, plot=True):
+   def run(self, num_steps, plot=True, save=True):
       for i in range(num_steps):
          # print(f"Update #{i}")
          self.update()
          if plot:
             self.plot(i)
          # time.sleep(0.1)
-      self.plot_all_waiting()
-      self.plot_waiting_by_technique()
-      self.plot_avg_diff_in_speed()
+
+      if save:
+         self.update_csv(*self.get_sum_diff_speed())
+         self.save_csv()
+      if plot:
+         self.plot_all_waiting()
+         self.plot_waiting_by_technique()
+         self.plot_avg_diff_in_speed()
    
    def load_csv(self):
-      return pd.read_csv('data.csv')
+      return pd.read_csv(f'data/{self.path_to_csv}')
 
    def save_csv(self):
-      pd.DataFrame(self.data).to_csv('data.csv', index=False)
+      pd.DataFrame(self.data).to_csv(f'data/{self.path_to_csv}', index=False)
    
    def plot_all_waiting(self):
       plt.close()
@@ -369,6 +375,8 @@ class Simulation:
       cautious = self.avg_diff_in_speed_per_timestep["Cautious"]
       normal = self.avg_diff_in_speed_per_timestep["Normal"]
 
+      sum_reckless, sum_cautious, sum_normal = self.get_sum_diff_speed()
+
       plt.plot(reckless, color='red', label='Reckless')
       plt.plot(cautious, color='green', label='Cautious')
       plt.plot(normal, color='blue', label='Normal')
@@ -377,23 +385,36 @@ class Simulation:
       plt.title('Average Difference in Desired Speed and Actual Speed of All Cars By Tecnique')
       plt.savefig('avg_diff_desired_actual.png')
       print("Sum of average Difference in Speed:")
-      sum_reckless = np.sum(reckless)
-      sum_cautious = np.sum(cautious)
-      sum_normal = np.sum(normal)
+      
       print(f"Reckless: {sum_reckless}\tCautious: {sum_cautious}\tNormal: {np.sum(sum_normal)}")
-      new_data = {}
-      new_data['num_cars'] = self.num_cars
-      reck_d, caut_d, norm_d = self.technique_distrib
-      new_data['reckless'] = reck_d
-      new_data['cautious'] = caut_d
-      new_data['']
-      self.data = self.data.append({'num_cars': self.num_cars, 'reckless': sum_reckless, 'cautious': sum_cautious, 'normal': sum_normal}, ignore_index=True)
 
+   def get_sum_diff_speed(self):
+      reckless = self.avg_diff_in_speed_per_timestep["Reckless"]
+      cautious = self.avg_diff_in_speed_per_timestep["Cautious"]
+      normal = self.avg_diff_in_speed_per_timestep["Normal"]
+      return np.sum(reckless), np.sum(cautious), np.sum(normal)
+   
+   def update_csv(self, sum_reckless, sum_cautious, sum_normal):
+    reckless_p, cautious_p, normal_p = self.technique_distrib
+    new_data = {
+        'num_cars': [self.num_cars],
+        'reckless': [reckless_p],
+        'cautious': [cautious_p],
+        'normal': [normal_p],
+        'avg_diff_speed_reckless': [sum_reckless],
+        'avg_diff_speed_cautious': [sum_cautious],
+        'avg_diff_speed_normal': [sum_normal]
+    }
+    self.data = pd.concat([self.data, pd.DataFrame(new_data)])
+
+   def save_csv(self):
+      self.data.to_csv(f'data/{self.path_to_csv}', index=False)
 
 
 if __name__ == "__main__":
-   highway_sim = Simulation(30, 1, [1, 0, 0], 3, 125)
-   highway_sim.run(500, True)
+   highway_sim = Simulation(30, 1, [1, 0, 0],'test_data', 3, 125)
+   highway_sim.run(500, False, False)
+   
    
    
 
