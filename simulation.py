@@ -1,10 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 import IPython.display as display
-import random as rand
-from pprint import pprint
-import time
 import pandas as pd
 
 #%matplotlib
