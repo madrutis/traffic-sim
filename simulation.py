@@ -158,6 +158,10 @@ class Simulation:
       """"Update the simulation by one time step"""
       # randomly update the order of the cars
       # update_order = np.random.permutation(np.arange(self.num_cars))
+      
+      ###########################################################################
+      # Start all of the variables that track parameters for visualizations later
+      ###########################################################################
       waiting_cars = self.get_waiting_cars()
       self.num_waiting_per_timestep.append(len(waiting_cars))
       
@@ -173,10 +177,15 @@ class Simulation:
       self.avg_diff_in_speed_per_timestep["Cautious"].append(caut_diff)
       self.avg_diff_in_speed_per_timestep["Normal"].append(norm_diff)
       
+      ####################################################################################
+      # Here is the start of the actual logic for updating one timestep of the simulation.
+      ####################################################################################
+
       # have cars switch lanes if possible
       self.switch_lanes(waiting_cars)
 
 
+      # update the cars sequentially in each lane.
       update_order = []
       for lane in self.lanes:
          update_order += lane
@@ -191,18 +200,19 @@ class Simulation:
          next_car = self.cars[next_car_index]
 
          dist_to_next_car = car.distance_to_car(next_car, self.lane_length)
-         # if car's speed is slower than next car's speed, and they are within the threshold, then brake
+         
          # car_a_velocity = car _a_velocity - deceleration_param * (1 / |car_b_position - car_a_position| **2)
          
-
+         # if car's speed is slower than next car's speed, and they are within the threshold, then brake
          if ((dist_to_next_car) < car.threshold) and (car.speed > next_car.speed):
-            # print(f"Car {i} is braking with a distance of {dist_to_next_car}")
             car.speed = max(car.speed - 2 * car.decel * (1 / dist_to_next_car ** 2), 0)
             if dist_to_next_car < car.length:
                car.speed = 0
             car.waiting_for += 1
          else:
             car.speed = min(car.desired_speed, car.speed + car.accel)
+            # if a car is able to speed up, the time that they are waiting decreases by half
+            # so that they favor wanting to stay in their own lane versus 
             car.waiting_for /= 2
 
          # make sure the car is still in bounds
@@ -217,7 +227,7 @@ class Simulation:
          # current lane
          current_lane = car.lane
          
-         # get the target lane(s)
+         # get the target lane(s) to switch into.
          target_lanes = []
          if current_lane == 0:
             target_lanes = [1]
@@ -225,15 +235,13 @@ class Simulation:
             target_lanes = [self.num_lanes - 2]
          else:
             target_lanes = [current_lane + 1, current_lane - 1]
-            # randomize the order of the target lanes
-            # if np.random.random() < 0.5:
-            #    target_lanes = target_lane[::-1]
-
-            #
+            
+            # pick the lane with less people in it first, 
+            # but if it's not available, then it will pick the other lane.
             if len(self.lanes[target_lanes[1]]) < len(self.lanes[target_lanes[0]]):
                target_lanes = target_lanes[::-1]
             
-            # pick the lane with less people in it!
+
 
          num_lane_changes = 0
          # check to see if the target lane is available
@@ -259,6 +267,7 @@ class Simulation:
       self.lanes[current_lane].remove(car_index)
       self.lanes[target_lane].append(car_index)
       car.lane = target_lane
+      # car is no longer waiting for a lane change or to speed up because they are in a new lane.
       car.waiting_for = 0
       self.update_lanes()
 
@@ -330,11 +339,13 @@ class Simulation:
       self.num_waiting_by_tecnique["Normal"].append(normal_waiting)
 
    def update_lanes(self):
+      """Update the lanes to make sure that the cars are in the correct order."""
       for lane_num, lane in enumerate(self.lanes):
          self.lanes[lane_num].sort(key=lambda x: self.cars[x].pos)
 
 
    def run(self, num_steps, plot=True, save=True):
+      """Run the simulation for a number of steps."""
       for i in range(num_steps):
          # print(f"Update #{i}")
          self.update()
@@ -351,12 +362,15 @@ class Simulation:
          self.plot_avg_diff_in_speed()
    
    def load_csv(self):
+      """Load the data from a csv file."""
       return pd.read_csv(f'data/{self.path_to_csv}')
 
    def save_csv(self):
+      """Save the data to a csv file."""
       pd.DataFrame(self.data).to_csv(f'data/{self.path_to_csv}', index=False)
    
    def plot_all_waiting(self):
+      """Plot the average number of waiting cars per timestep."""
       plt.close()
       plt.figure()
       plt.plot([val / self.num_cars for val in self.num_waiting_per_timestep])
@@ -366,6 +380,7 @@ class Simulation:
       plt.savefig('waiting_cars.png')
 
    def plot_waiting_by_technique(self):
+      """Plot the average number of waiting cars by technique per timestep."""
       plt.close()
       plt.figure(figsize=(100, 5))
       reckless = [x / self.num_cars_by_technique["Reckless"] for x in self.num_waiting_by_tecnique["Reckless"]]
@@ -402,14 +417,17 @@ class Simulation:
       print(f"Reckless: {sum_reckless}\tCautious: {sum_cautious}\tNormal: {np.sum(sum_normal)}")
 
    def get_sum_diff_speed(self):
+      """Get the sum of the average difference in desired speed and actual
+      speed for every car for an entire run of the simulation."""
       reckless = self.avg_diff_in_speed_per_timestep["Reckless"]
       cautious = self.avg_diff_in_speed_per_timestep["Cautious"]
       normal = self.avg_diff_in_speed_per_timestep["Normal"]
       return np.sum(reckless), np.sum(cautious), np.sum(normal)
    
    def update_csv(self, sum_reckless, sum_cautious, sum_normal):
-    reckless_p, cautious_p, normal_p = self.technique_distrib
-    new_data = {
+      """Update the csv after an entire run of the simulation."""
+      reckless_p, cautious_p, normal_p = self.technique_distrib
+      new_data = {
         'num_cars': [self.num_cars],
         'reckless': [reckless_p],
         'cautious': [cautious_p],
@@ -419,8 +437,8 @@ class Simulation:
         'avg_diff_speed_normal': [sum_normal],
         'avg_lane_changes': [np.mean(self.lane_changes_per_timestep)],
         'avg_speed': [np.mean(self.avg_speed)]
-    }
-    self.data = pd.concat([self.data, pd.DataFrame(new_data)])
+      }
+      self.data = pd.concat([self.data, pd.DataFrame(new_data)])
 
    def save_csv(self):
       self.data.to_csv(f'data/{self.path_to_csv}', index=False)

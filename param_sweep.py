@@ -5,6 +5,7 @@ import sys
 
 def parameter_sweep(path):
     # runs the simulation for 500 epochs with different distributions of reckless, cautious, and normal drivers
+    # from 0.0 for each to 1.0 in increments of 0.1
     reckless_probs = np.arange(0, 1.1, .1)
     cautious_probs = np.arange(0, 1.1, .1)
     runs = 0
