@@ -27,3 +27,12 @@ Run the script `setup.sh` in your preferred unix/linux terminal which will:
 Take a look around simulation.py, and adjust the initial parameters to the `Simulation` class.<br>
 In VS Code or your preferred IDE, right click on the code in simulation.py, and click `Run in Interactive Window` ➡️ `Run Current File in Interactive Window`<br>
 And Voila 🪄
+
+### Running a parameter sweep:
+- Initialize a new dataset with `python3 init_df.py <dataset_name.csv>`
+- Run a parameter sweep with `python3 param_sweep.py <dataset_name.csv>`
+- Feel free to adjust the initalization of the simulation in `para_sweep.py` to your liking
+- The csv files are saved in data/
+
+### Visualize the data:
+- The preliminary visualizations are in visualize_data.ipynb
