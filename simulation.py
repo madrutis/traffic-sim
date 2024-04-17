@@ -74,6 +74,8 @@ class Simulation:
 
       
       self.num_cars_by_technique = {"Reckless": 0, "Cautious": 0, "Normal": 0}
+      self.lane_changes_per_timestep = []
+      self.avg_speed = []
 
       self.num_waiting_per_timestep = []
       self.num_waiting_by_tecnique = {"Reckless": [], "Cautious": [], "Normal": []}
@@ -161,6 +163,9 @@ class Simulation:
       
       # track waiting technique
       self.track_waiting_technique()
+
+      # track average speed
+      self.avg_speed.append(self.get_avg_speed())
       
       # track difference in average speed
       reck_diff, caut_diff, norm_diff = self.get_difference_in_desired_speed()
@@ -230,7 +235,7 @@ class Simulation:
             
             # pick the lane with less people in it!
 
-         
+         num_lane_changes = 0
          # check to see if the target lane is available
          for target_lane in target_lanes:
             lane_availabe = True
@@ -241,8 +246,11 @@ class Simulation:
                   lane_availabe = False
                   break
             if lane_availabe:
+               num_lane_changes += 1
                self.swap_individual_car(car, target_lane)
                break
+         # track the number of lane changes per timestep
+         self.lane_changes_per_timestep.append(num_lane_changes)
 
    def swap_individual_car(self, car, target_lane):
       """Swap the car from the current lane to the target lane."""
@@ -264,6 +272,15 @@ class Simulation:
             if car.waiting_for >= car.patience:
                cars_waiting.append(car)
       return cars_waiting
+   
+   def get_avg_speed(self):
+      """Get the average speed of each car at a timestep"""
+      total_speed = 0
+      for lane in self.lanes:
+         for car_index in lane:
+            car = self.cars[car_index]
+            total_speed += car.speed
+      return total_speed / self.num_cars
    
    def get_difference_in_desired_speed(self):
       """Get the avg(sum|speed - desired_speed|) of each type of driver."""
@@ -399,7 +416,9 @@ class Simulation:
         'normal': [normal_p],
         'avg_diff_speed_reckless': [sum_reckless],
         'avg_diff_speed_cautious': [sum_cautious],
-        'avg_diff_speed_normal': [sum_normal]
+        'avg_diff_speed_normal': [sum_normal],
+        'avg_lane_changes': [np.mean(self.lane_changes_per_timestep)],
+        'avg_speed': [np.mean(self.avg_speed)]
     }
     self.data = pd.concat([self.data, pd.DataFrame(new_data)])
 

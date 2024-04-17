@@ -4,7 +4,17 @@ import sys
 
 
 def init_df(path):
-    df = pandas.DataFrame(columns=['num_epochs','num_cars','reckless', 'cautious', 'normal', 'avg_diff_speed_reckless', 'avg_diff_speed_cautious', 'avg_diff_speed_normal'])
+    columns = ['num_epochs',
+               'num_cars',
+               'reckless', 
+               'cautious',
+                'normal',
+                'avg_diff_speed_reckless',
+                'avg_diff_speed_cautious',
+                'avg_diff_speed_normal',
+                'avg_lane_changes',
+                'avg_speed']
+    df = pandas.DataFrame(columns=columns)
     df.to_csv(f'data/{path}', index=False)
 
 
