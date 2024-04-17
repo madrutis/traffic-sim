@@ -114,11 +114,11 @@ class Simulation:
          for car_index in lane:
             positions[lane_num].append(self.cars[car_index].pos)
       
-      plt.figure(figsize=(10, 3))  # Adjust figure size if needed
+      plt.figure(figsize=(10, 2.2))  # Adjust figure size if needed
 
       # Plot road lines for each lane
       for lane in range(self.num_lanes):
-         plt.plot([0, self.lane_length], [lane * .05, lane * .05], color='gray', linestyle='--', linewidth=1)
+         plt.plot([0, self.lane_length], [lane * .02, lane * .02], color='gray', linestyle='--', linewidth=1)
 
       # Define a color map for each driving type
       
@@ -127,7 +127,7 @@ class Simulation:
          lane_positions = positions[lane]
          driving_types = [self.cars[car_index].technique for car_index in self.lanes[lane]]
          colors = [self.driving_type_colors[driving_type] for driving_type in driving_types]
-         plt.scatter(lane_positions, [lane * .05] * len(lane_positions), color=colors, label=f'Lane {lane}')
+         plt.scatter(lane_positions, [lane * .02] * len(lane_positions), color=colors, label=f'Lane {lane}')
 
       # # Plot cars based on whether they are waiting
       # for lane in range(self.num_lanes):
@@ -140,7 +140,7 @@ class Simulation:
       plt.xlabel('Position')
       plt.ylabel('Lane')
       plt.title(f'{self.num_lanes} Lane Highway with {self.num_cars} Cars at timestep {timestep}')
-      plt.yticks([lane * .05 for lane in range(self.num_lanes)], [f"Lane{lane}" for lane in range(self.num_lanes)])
+      plt.yticks([lane * .02 for lane in range(self.num_lanes)], [f"Lane{lane}" for lane in range(self.num_lanes)])
 
 
       # Show plot
@@ -198,7 +198,7 @@ class Simulation:
             car.waiting_for += 1
          else:
             car.speed = min(car.desired_speed, car.speed + car.accel)
-            # car.waiting_for = 0
+            car.waiting_for /= 2
 
          # make sure the car is still in bounds
          car.check_bounds(self.lane_length)
@@ -408,8 +408,8 @@ class Simulation:
 
 
 if __name__ == "__main__":
-   highway_sim = Simulation(30, 1, [1, 0, 0],'test_data', 3, 125)
-   highway_sim.run(500, False, False)
+   highway_sim = Simulation(30, 1, [1, 0, 0],'test.csv', 3, 125)
+   highway_sim.run(500, True, False)
    
    
    
