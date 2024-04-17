@@ -23,13 +23,13 @@ Run the script `setup.sh` in your preferred unix/linux terminal which will:
 <br>
 * If the requirements download doesn't work, you can just pip install <package> for the package imported at the top of simulation.py
 
-### Running the simulation:
+## Running the simulation:
 Take a look around simulation.py, and adjust the initial parameters to the `Simulation` class.<br>
 Initalize a dataset with `python3 init_df.py <test.csv>` even if you don't plan to store the data from the run.
-## If you use VSCode: 
+### If you use VSCode: 
 right click on the code in simulation.py, and click `Run in Interactive Window` ➡️ `Run Current File in Interactive Window`<br>
 And Voila 🪄
-## If you have a different IDE and don't want to download VS Code:
+### If you have a different IDE and don't want to download VS Code:
 Copy and paste the all of the code from simulation.py into one monstrous code block and hit play!
 
 
