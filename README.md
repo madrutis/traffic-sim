@@ -39,5 +39,5 @@ Copy and paste the all of the code from simulation.py into one monstrous code bl
 - Feel free to adjust the initalization of the simulation in `para_sweep.py` to your liking
 - The csv files are saved in data/
 
-### Visualize the data:
+### Visualize the generated dataset:
 - The preliminary visualizations are in visualize_data.ipynb
