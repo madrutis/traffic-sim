@@ -37,6 +37,8 @@ class Car:
          self.assign_metrics(Car.normal)
    
    def assign_metrics(self, technique):
+      """"Assign the characteristics of the car based on the technique given to the driver."""
+      # add some noise to the desired speed, accel, and decel of each driver
       self.desired_speed = np.random.normal(technique["desired_speed"], 0.1)
       self.desired_accel = np.random.normal(technique["accel"], .01)
       self.desired_decel = np.random.normal(technique["decel"], .01)
@@ -46,10 +48,12 @@ class Car:
       self.patience = technique["patience"]
    
    def check_bounds(self, lane_length):
+      """Check to see if the car is still in bounds of the lane."""
       if self.pos >= lane_length:
          self.pos = self.pos % lane_length
 
    def distance_to_car(self, car, lane_length):
+      """Find the distance to the car in front of the current car."""
       # make sure that this accounts for the looping nature of the road
       return min(car.pos - self.pos, lane_length + car.pos - self.pos)
 
@@ -116,18 +120,19 @@ class Simulation:
          for car_index in lane:
             positions[lane_num].append(self.cars[car_index].pos)
       
-      plt.figure(figsize=(10, 2.2))  # Adjust figure size if needed
+      plt.figure(figsize=(10, 2.2))
 
       # Plot road lines for each lane
       for lane in range(self.num_lanes):
          plt.plot([0, self.lane_length], [lane * .02, lane * .02], color='gray', linestyle='--', linewidth=1)
 
-      # Define a color map for each driving type
+
       
       # Plot cars based on technique
       for lane in range(self.num_lanes):
          lane_positions = positions[lane]
          driving_types = [self.cars[car_index].technique for car_index in self.lanes[lane]]
+         # give each driving type a difference color (red: reckless, blue: normal, green: cautious)
          colors = [self.driving_type_colors[driving_type] for driving_type in driving_types]
          plt.scatter(lane_positions, [lane * .02] * len(lane_positions), color=colors, label=f'Lane {lane}')
 
@@ -138,7 +143,7 @@ class Simulation:
       #    colors = ['red' if waiting else 'yellow' for waiting in are_waiting]
       #    plt.scatter(lane_positions, [lane * .05] * len(lane_positions), color=colors, label=f'Lane {lane}')
 
-      # Add labels to plot
+      # Add labels to graph
       plt.xlabel('Position')
       plt.ylabel('Lane')
       plt.title(f'{self.num_lanes} Lane Highway with {self.num_cars} Cars at timestep {timestep}')
@@ -244,7 +249,7 @@ class Simulation:
 
 
          num_lane_changes = 0
-         # check to see if the target lane is available
+         # iterate through target lanes to see if the target lane is available
          for target_lane in target_lanes:
             lane_availabe = True
             for neighbor_index in self.lanes[target_lane]:
@@ -264,7 +269,9 @@ class Simulation:
       """Swap the car from the current lane to the target lane."""
       car_index = car.index
       current_lane = car.lane
+      # remove car from the current lane
       self.lanes[current_lane].remove(car_index)
+      # add car to the target lane
       self.lanes[target_lane].append(car_index)
       car.lane = target_lane
       # car is no longer waiting for a lane change or to speed up because they are in a new lane.
@@ -447,7 +454,7 @@ class Simulation:
 if __name__ == "__main__":
    highway_sim = Simulation(30, 1, [1, 0, 0],'test.csv', 3, 125)
    highway_sim.run(500, True, False)
-   
+
    
    
 
