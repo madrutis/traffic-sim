@@ -452,10 +452,5 @@ class Simulation:
 
 
 if __name__ == "__main__":
-   highway_sim = Simulation(30, 1, [1, 0, 0],'test.csv', 3, 125)
+   highway_sim = Simulation(30, 1, [.6, .3, .1],'test.csv', 3, 125)
    highway_sim.run(500, True, False)
-
-   
-   
-
-
