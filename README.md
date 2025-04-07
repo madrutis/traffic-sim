@@ -1,7 +1,4 @@
-# Complex Systems 270 Final Project
-By: Matthew Drutis (did the coding portion), Logan Hayner, Stevie Port
-
-## Multi-lane Highway Simulation 🛣️:
+# Multi-lane Highway Simulation 🛣️:
 
 There are 3 different agents that can spawn, each with their own individual driving characteristics.
 - **Reckless** 🏎️
